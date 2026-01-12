@@ -8,15 +8,9 @@ A typical web server looks like a function of type
 
 for some types `Request` and `Response`.
 
-This is a minimal set of tools for defining and combining such functions.
+This is a minimal tool for defining and combining such functions.
 
-The three operations provided are:
-
-* `staticDirectory`
-* `dynamicDirectory`
-* `resource`
-
-See `readme.test.ts` for an example application that demonstrates the use of all three.
+See `readme.test.ts` for an example application.
 
 ## Request
 

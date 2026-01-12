@@ -22,10 +22,12 @@ class Server {
 
 	// The server's main entry point (called by the tests below). The website gets to live
 	// the top level for vanity, and the API is relegated to a subdirectory.
-	fetch: (request: Request) => Promise<Response> = router.staticDirectory(
-		...this.website.routes,
-		{ name: "api", server: this.api.fetch },
-	);
+	fetch: (request: Request) => Promise<Response> = router.define({
+		staticContents: [
+			...this.website.routes,
+			{ name: "api", server: this.api.fetch },
+		],
+	});
 }
 
 class Website {
@@ -41,11 +43,15 @@ class Website {
 		return [
 			{
 				name: "",
-				server: router.resource({ method: "GET", server: this.getHome }),
+				server: router.define({
+					resource: [{ method: "GET", server: this.getHome }],
+				}),
 			},
 			{
 				name: "about",
-				server: router.resource({ method: "GET", server: this.getAbout }),
+				server: router.define({
+					resource: [{ method: "GET", server: this.getAbout }],
+				}),
 			},
 			{ name: "cart", server: this.cart.fetch },
 		];
@@ -62,16 +68,22 @@ class Website {
 
 // Pages that Website nests within the "cart" directory
 class CartWebsite {
-	fetch: (request: Request) => Promise<Response> = router.staticDirectory(
-		{
-			name: "view",
-			server: router.resource({ method: "GET", server: this.getView }),
-		},
-		{
-			name: "checkout",
-			server: router.resource({ method: "GET", server: this.getCheckout }),
-		},
-	);
+	fetch: (request: Request) => Promise<Response> = router.define({
+		staticContents: [
+			{
+				name: "view",
+				server: router.define({
+					resource: [{ method: "GET", server: this.getView }],
+				}),
+			},
+			{
+				name: "checkout",
+				server: router.define({
+					resource: [{ method: "GET", server: this.getCheckout }],
+				}),
+			},
+		],
+	});
 
 	async getView() {
 		return { status: 200, body: "Cart" };
@@ -84,30 +96,45 @@ class CartWebsite {
 class Api {
 	book = new BookApi();
 
-	fetch: (request: Request) => Promise<Response> = router.staticDirectory({
-		name: "v1",
-		server: router.staticDirectory({
-			name: "books-by-id",
-			// books-by-id is a *dynamic* directory; its contents are not statically enumerated.
-			server: router.dynamicDirectory(async ({ path, method, parent, body }) =>
-				// We would at this point insert some check that the requested book ID exists
-				// before handing off the control flow to BookApi. This would also be a reasonable
-				// place to insert authorization for this resource, or perhaps fetch some
-				// additional information about the book.
-				this.book.fetch({ path, method, body, bookId: parent }),
-			),
-		}),
+	fetch: (request: Request) => Promise<Response> = router.define({
+		staticContents: [
+			{
+				name: "v1",
+				server: router.define({
+					staticContents: [
+						{
+							name: "books-by-id",
+							// books-by-id is a *dynamic* directory; its contents are not statically enumerated.
+							server: router.define({
+								dynamicContents: async ({ path, method, parent, body }) =>
+									// We would at this point insert some check that the requested book ID exists
+									// before handing off the control flow to BookApi. This would also be a reasonable
+									// place to insert authorization for this resource, or perhaps fetch some
+									// additional information about the book.
+									this.book.fetch({ path, method, body, bookId: parent }),
+							}),
+						},
+					],
+				}),
+			},
+		],
 	});
 }
 
 class BookApi {
 	fetch: (request: Request & { bookId: string }) => Promise<Response> =
-		router.staticDirectory({
-			name: "synopsis",
-			server: router.resource(
-				{ method: "GET", server: this.getSynopsis },
-				{ method: "POST", server: this.postSynopsis },
-			),
+		router.define({
+			staticContents: [
+				{
+					name: "synopsis",
+					server: router.define({
+						resource: [
+							{ method: "GET", server: this.getSynopsis },
+							{ method: "POST", server: this.postSynopsis },
+						],
+					}),
+				},
+			],
 		});
 
 	async getSynopsis(request: Request & { bookId: string }): Promise<Response> {
