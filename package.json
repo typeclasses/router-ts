@@ -2,7 +2,12 @@
   "name": "router",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+		"lint": "bun run biome check",
+		"lint:fix": "bun run biome check --fix"
+  },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
     "@types/bun": "latest"
   },
   "peerDependencies": {
