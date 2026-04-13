@@ -27,11 +27,4 @@ The `Request` type can be any record, but this library assumes a few special att
 
 ## Response
 
-The `Response` type can be anything. The only requirement is that the `router` library
-be configured with a function of type
-
-```ts
-(responseOptions: { status: number }) => Response
-```
-
-which can be used to construct a `Response` given an HTTP status code.
+The `Response` type can be anything.
